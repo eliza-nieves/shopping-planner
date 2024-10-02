@@ -32,16 +32,22 @@ const HelpArea = styled.div<{ $open: boolean }>`
   li {
     list-style: none;
   }
+  li:not(:first-child) {
+    margin-top: 5px;
+  }
   a {
     text-decoration: none;
-    color: blue;
+    color: #3877eb;
     text-shadow: #0d69d5 0px 0 1px;
+  }
+  i {
+    color: lightblue;
   }
 `;
 
 async function getShoppingList(
   url: string,
-  region: string
+  region: string,
 ): Promise<{
   items: Item[];
   purchases: Purchase[];
@@ -51,7 +57,7 @@ async function getShoppingList(
   const items = await itemsFromURL(url);
   const { purchases, unavailable, cost } = await getItemPurchases(
     region,
-    items
+    items,
   );
   return { items, purchases, cost, unavailable };
 }
@@ -95,15 +101,15 @@ async function itemsFromURL(url: string): Promise<Item[]> {
  */
 function optimalListings(
   listings: Listing[],
-  quantityNeeded: number
+  quantityNeeded: number,
 ): Listing[] {
   // initialize DP table
   const maxquantityNeeded = listings.reduce(
     (acc, item) => acc + item.quantity,
-    0
+    0,
   );
   const dp: number[] = new Array(maxquantityNeeded + 1).fill(
-    Number.POSITIVE_INFINITY
+    Number.POSITIVE_INFINITY,
   );
   dp[0] = 0;
 
@@ -153,7 +159,7 @@ function optimalListings(
  */
 function addPurchases(
   item: Item,
-  listings: Listing[]
+  listings: Listing[],
 ): { purchases: Purchase[]; cost: number } | null {
   let cost = 0;
   //failsafe for if there are no listings (not available to buy)
@@ -165,7 +171,7 @@ function addPurchases(
   for (const listing of listings) {
     //check to see if we already have a purchase at the world of this listing
     const foundPurchase = purchases.find(
-      (purchase) => purchase.worldID === listing.worldID
+      (purchase) => purchase.worldID === listing.worldID,
     );
 
     //if so update that purchase's quantity, priceMax
@@ -203,7 +209,7 @@ function addPurchases(
  */
 async function getItemPurchases(
   region: string,
-  items: Item[]
+  items: Item[],
 ): Promise<{ purchases: Purchase[]; unavailable: Item[]; cost: number }> {
   let allPurchases: Purchase[] = [];
   const unavailableItems: Item[] = [];
@@ -261,7 +267,7 @@ export const Content = (props: {
           : currentRegion;
       const { items, purchases, cost, unavailable } = await getShoppingList(
         urlInput,
-        scope
+        scope,
       );
       setShoppingList(purchases);
       setUnavailableList(unavailable);
@@ -281,7 +287,7 @@ export const Content = (props: {
     (purchase: Purchase, field: keyof Purchase, newValue: any) => {
       const indexToUpdate = shoppingList.findIndex(
         (item) =>
-          item.itemID === purchase.itemID && item.worldID === purchase.worldID
+          item.itemID === purchase.itemID && item.worldID === purchase.worldID,
       );
       if (indexToUpdate >= 0) {
         const updatedShoppingList = update(shoppingList, {
@@ -292,7 +298,7 @@ export const Content = (props: {
         throw new Error("Item not found");
       }
     },
-    [shoppingList, setShoppingList]
+    [shoppingList, setShoppingList],
   );
 
   const updateAllPurchasesByItem = useCallback(
@@ -302,14 +308,14 @@ export const Content = (props: {
         shoppingList,
         {
           itemID: item.id,
-        }
+        },
       );
       const updatedPurchases = affectedPurchases.map((item) => {
         return { ...item, [field]: newValue };
       });
       setShoppingList([...unaffectedPurchases, ...updatedPurchases]);
     },
-    [shoppingList, setShoppingList]
+    [shoppingList, setShoppingList],
   );
 
   return (
@@ -329,20 +335,33 @@ export const Content = (props: {
         <ul>
           <li>
             Make a group in{" "}
-            <a href="https://www.garlandtools.org/">Garland Tools</a> by
+            <a href="https://www.garlandtools.org/db/">Garland Tools</a> by
             pressing <i>Tools</i>, then <i>New Group</i>.
           </li>
           <li>Add all desired items to the group.</li>
           <li>
             Select the group with your mouse. (Make sure it's highlighted!)
           </li>
-          <li>Copy the URL from your browser.</li>
           <li>
-            <strong>Note:</strong> Does NOT work with crafting lists at the
-            moment. For now, add each individual item with its quantity to a new
-            group.
+            Copy the URL from your browser. It'll look something like this:
           </li>
+          <li>
+            <i>
+              https://www.garlandtools.org/db/#group/Group%203%7Bitem/5115+156%7D
+            </i>
+          </li>
+          <li>Paste the URL above!</li>
         </ul>
+        <p>
+          <strong>Note:</strong>
+          <ul>
+            <li>Does NOT work with crafting lists at the moment.</li>
+            <li>
+              For now, add each individual item with its quantity to a new
+              group.
+            </li>
+          </ul>
+        </p>
       </HelpArea>
       <RegionSelect
         regions={regions}
